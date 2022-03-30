@@ -40,7 +40,7 @@ int main() {
         
         // if there is a Process in ready queue
         if(!ready.empty()) {
-            printf("\nSCHEDULER: starting %s\n", ready.front().name.c_str());
+            printf("\nSCHEDULER: allocating CPU to %s\n", ready.front().name.c_str());
 
             pthread_create(&ready.front().tid, NULL, ready.front().func, NULL);  // start running Process at front of ready queue
 
@@ -82,48 +82,30 @@ int main() {
 
 // user process 1
 void *execUP1(void *) {
-    //printf("\nUser Process 1: ");
-
-    string userProcessExecutable1 = "./userProcess1";
-    system(userProcessExecutable1.c_str());
-
+    system("./userProcess1");
     return NULL;
 }
 
 // user process 2
 void *execUP2(void *) {
-    //printf("\nUser Process 2: \n");
-
-    string userProcessExecutable2 = "./userProcess2";
-    system(userProcessExecutable2.c_str());
-
+    system("./userProcess2");
     return NULL;
 }
 
 // I/O process 1
 void *execIO1(void *) {
-    //printf("\nI/O Process 1: ");
-
-    string ioProcessExecutable1 = "./ioProcess1";
-    system(ioProcessExecutable1.c_str());
-
+    system("./ioProcess1");
     return NULL; 
 }
 
 // I/O process 2
 void *execIO2(void *) {
-    //printf("I/O Process 2: ");
-
-    string ioProcessExecutable2 = "./ioProcess2";
-    system(ioProcessExecutable2.c_str());
-
+    system("./ioProcess2");
     return NULL;
 }
 
 void updateState(Process p, string newState) {
     string prevState = p.state;
-
     p.state = newState;
-
     printf("SCHEDULER: %s has moved from %s state to %s state\n", p.name.c_str(), prevState.c_str(), p.state.c_str());
 }
