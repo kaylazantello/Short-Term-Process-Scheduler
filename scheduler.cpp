@@ -5,23 +5,11 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <algorithm>
+#include "Process.h"
 
 using namespace std;
 
 int timeQuantum = 2;
-
-enum states {
-    RUNNING, READY, BLOCKED, IDLE
-};
-
-struct Process {
-    string name;  // process name
-    int pid;  // process id
-    pthread_t tid;  // thread id
-    char type;  // process type: u = user process, o = I/O process
-    enum states state;  // process state
-    void* (*func)(void *);  // process routine
-};
 
 // user process 1
 void *execA(void *) {
@@ -92,43 +80,14 @@ int main() {
 
     pthread_t pA, pB, pC, pD;
 
-    // create Process structure variables
-    Process processA;
-    processA.name = "Process A";
-    processA.pid = 1;
-    processA.tid = pA;
-    processA.type = 'u';
-    processA.state = READY;
-    processA.func = execA;
-
-    Process processB;
-    processB.name = "Process B";
-    processB.pid = 2;
-    processB.tid = pB;
-    processB.type = 'u';
-    processB.state = READY;
-    processB.func = execB;
-
-    Process processC;
-    processC.name = "Process C";
-    processC.pid = 3;
-    processC.tid = pC;
-    processC.type = 'o';
-    processC.state = READY;
-    processC.func = execC;
-
-    Process processD;
-    processD.name = "Process D";
-    processD.pid = 4;
-    processD.tid = pD;
-    processD.type = 'o';
-    processD.state = BLOCKED;
-    processD.func = execD;
+    Process processA("Process A", 1, pA, 1, READY, execA);
+    Process processB("Process B", 1, pB, 1, READY, execB);
+    Process processC("Process C", 1, pC, 2, READY, execC);
 
     ready.push_back(processA);
     ready.push_back(processC);
     ready.push_back(processB);
-    //waiting.push(processD);
+
 /*
     // used for testing pthread_cancel and getting cancellation status after pthread_join
 
@@ -177,10 +136,9 @@ int main() {
             printf("SCHEDULER: %s has moved from READY state to RUNNING state\n", ready.front().name.c_str());
 
             sleep(timeQuantum);  // wait for length of time quantum
-            //printf("\nSCHEDULER: finished sleep\n");
 
             // if there are no other processes in ready queue and current process is I/O
-            if(ready.size() == 1 && ready.front().type == 'o') {
+            if(ready.size() == 1 && ready.front().type == 2) {
                 sleep(20);  // give process more time to finish
             }
 
@@ -188,14 +146,17 @@ int main() {
             if (pthread_cancel(ready.front().tid) != 0) { // if cancellation request throws error, then thread had already terminated
                 printf("\nSCHEDULER: %s has moved from RUNNING state to IDLE state...\n", ready.front().name.c_str());
                 ready.front().state = IDLE;  // update process state
+
                 printf("SCHEDULER: removing %s from ready queue...\n", ready.front().name.c_str());
                 ready.erase(ready.begin()); // pop thread from head of ready queue
             }
             else { // else if request is successful, thread was not finished and therefore took too long
                 printf("\nSCHEDULER: %s has moved from RUNNING state to WAITING state\n", ready.front().name.c_str());
                 ready.front().state = BLOCKED;  // update process state
+
                 printf("SCHEDULER: moving %s to waiting queue...\n", ready.front().name.c_str());
                 waiting.push(ready.front()); // move thread to tail of waiting queue
+
                 printf("SCHEDULER: removing %s from ready queue...\n", ready.front().name.c_str());
                 ready.erase(ready.begin()); // pop thread from head of ready queue
             }
@@ -207,8 +168,10 @@ int main() {
             if((rand() % 100 + 1) <= 75) {
                 printf("\nSCHEDULER: %s has moved from WAITING state to READY state\n", waiting.front().name.c_str());
                 waiting.front().state = READY;  // update process state
+
                 printf("SCHEDULER: moving %s to front of ready queue...\n", waiting.front().name.c_str());
                 ready.insert(ready.begin(), waiting.front());  // insert process at head of ready queue
+                
                 printf("SCHEDULER: removing %s from waiting queue...\n", waiting.front().name.c_str());
                 waiting.pop();  // pop process from head of waiting queue
             }
